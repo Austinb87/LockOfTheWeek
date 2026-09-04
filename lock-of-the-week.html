@@ -1,0 +1,440 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lock of the Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12161d;
+    --card: #1b212b;
+    --card-border: #2a3140;
+    --gold: #c7a03d;
+    --gold-hi: #ddbc55;
+    --text: #eaedf2;
+    --muted: #8791a3;
+    --green: #4caf6d;
+    --red: #d9634a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 32px 16px;
+  }
+  .wrap { width: 100%; max-width: 420px; }
+
+  .wordmark {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.14em;
+    color: var(--gold);
+    text-align: center;
+    margin: 0 0 6px;
+  }
+  .weekrange {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    margin: 0 0 22px;
+  }
+
+  .ticket {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px -20px rgba(0,0,0,0.6);
+  }
+
+  .stub-head {
+    padding: 22px 24px 20px;
+    text-align: center;
+  }
+  .stub-head .who {
+    font-family: 'Oswald', sans-serif;
+    font-size: 26px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .stub-head .sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 4px 0 0;
+  }
+
+  .perforation {
+    position: relative;
+    height: 1px;
+    background: repeating-linear-gradient(to right, var(--card-border) 0 6px, transparent 6px 12px);
+    margin: 0 0;
+  }
+  .perforation::before, .perforation::after {
+    content: "";
+    position: absolute;
+    top: -9px;
+    width: 18px;
+    height: 18px;
+    background: var(--bg);
+    border-radius: 50%;
+  }
+  .perforation::before { left: -9px; }
+  .perforation::after { right: -9px; }
+
+  .body-pad { padding: 22px 24px 24px; }
+
+  .field { margin-bottom: 16px; }
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field input {
+    width: 100%;
+    background: #11151c;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    padding: 12px 13px;
+    color: var(--text);
+    font-size: 15px;
+    font-family: inherit;
+  }
+  .field input:focus {
+    outline: none;
+    border-color: var(--gold);
+  }
+
+  button.primary {
+    width: 100%;
+    background: var(--gold);
+    color: #1a1405;
+    border: none;
+    border-radius: 6px;
+    padding: 13px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  button.primary:hover { background: var(--gold-hi); }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+
+  .msg { font-size: 13.5px; margin-top: 12px; text-align: center; }
+  .msg.error { color: var(--red); }
+  .msg.success { color: var(--green); }
+
+  .locked {
+    text-align: center;
+  }
+  .locked .check {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    background: rgba(76,175,109,0.15);
+    color: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 14px;
+    font-size: 22px;
+  }
+  .locked h2 {
+    font-family: 'Oswald', sans-serif;
+    font-weight: 600;
+    font-size: 19px;
+    margin: 0 0 6px;
+  }
+  .locked p { color: var(--muted); font-size: 13.5px; margin: 0; }
+
+  .roster {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 1px solid var(--card-border);
+  }
+  .roster .count {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    text-align: center;
+  }
+  .roster ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .roster li {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 14px;
+  }
+  .roster .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--card-border);
+  }
+  .roster li.done .dot { background: var(--green); }
+  .roster .status { font-size: 12px; color: var(--muted); }
+  .roster li.done .status { color: var(--green); }
+
+  .picker { display: flex; flex-direction: column; gap: 10px; }
+  .picker button {
+    background: #11151c;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 14px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 15px;
+    cursor: pointer;
+    text-align: left;
+  }
+  .picker button:hover { border-color: var(--gold); }
+
+  .center-note {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 10px 4px 0;
+  }
+
+  .setup-banner {
+    background: rgba(217,99,74,0.12);
+    border: 1px solid rgba(217,99,74,0.4);
+    color: #f0b3a3;
+    font-size: 12.5px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    line-height: 1.5;
+  }
+  .setup-banner code {
+    background: rgba(0,0,0,0.25);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="wordmark">LOCK OF THE WEEK</p>
+  <p class="weekrange" id="weekrange"></p>
+  <div id="setupBanner"></div>
+  <div class="ticket" id="ticket"></div>
+</div>
+
+<script>
+  // ------------------------------------------------------------------
+  // CONFIG — edit these two lines after you deploy the Apps Script
+  // ------------------------------------------------------------------
+  const CONFIG = {
+    WEBAPP_URL: "https://script.google.com/macros/s/AKfycbwRUF5MF3utCwUcp5Hc3fJdoCFrmbUms3xRkbcvr3mCUrHUjY79ZUvVrW-tSHh9e47P/exec",
+    PLAYERS: ["Austin", "Baroni", "Dobby", "Dylan"]
+  };
+  // ------------------------------------------------------------------
+
+  const WEEK_START_DAY = 4; // Thursday
+
+  function slugify(s) {
+    return s.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
+  }
+
+  function getWeekInfo(date = new Date()) {
+    const d = new Date(date);
+    const day = d.getDay();
+    const diff = (day - WEEK_START_DAY + 7) % 7;
+    const start = new Date(d);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(d.getDate() - diff);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const id = start.toISOString().slice(0, 10);
+    return { start, end, id, label: `${fmt(start)} – ${fmt(end)}` };
+  }
+
+  function getPlayerFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('player');
+    if (!raw) return null;
+    const match = CONFIG.PLAYERS.find(p => slugify(p) === slugify(raw));
+    return match || null;
+  }
+
+  function setPlayerInURL(name) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('player', slugify(name));
+    window.history.replaceState({}, '', url);
+  }
+
+  const week = getWeekInfo();
+  document.getElementById('weekrange').textContent = week.label;
+
+  if (CONFIG.WEBAPP_URL.indexOf('PASTE_YOUR') === 0) {
+    document.getElementById('setupBanner').innerHTML =
+      '<div class="setup-banner">Setup needed: paste your Apps Script Web app URL into <code>CONFIG.WEBAPP_URL</code> in this file, and update <code>CONFIG.PLAYERS</code> to match the names in your script.</div>';
+  }
+
+  const ticketEl = document.getElementById('ticket');
+
+  function renderPicker() {
+    ticketEl.innerHTML = `
+      <div class="stub-head">
+        <p class="who">Who's this?</p>
+        <p class="sub">Pick your name to continue</p>
+      </div>
+      <div class="perforation"></div>
+      <div class="body-pad">
+        <div class="picker" id="pickerBtns"></div>
+      </div>
+    `;
+    const box = document.getElementById('pickerBtns');
+    CONFIG.PLAYERS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.textContent = p;
+      btn.onclick = () => { setPlayerInURL(p); boot(); };
+      box.appendChild(btn);
+    });
+  }
+
+  function renderLoading(player) {
+    ticketEl.innerHTML = `
+      <div class="stub-head">
+        <p class="who">${player}</p>
+        <p class="sub">Checking this week's board…</p>
+      </div>
+    `;
+  }
+
+  function renderRoster(container, submitted) {
+    const names = Object.keys(submitted);
+    const doneCount = names.filter(n => submitted[n]).length;
+    const rosterEl = document.createElement('div');
+    rosterEl.className = 'roster';
+    rosterEl.innerHTML = `<p class="count">${doneCount}/${names.length} locks in</p>`;
+    const ul = document.createElement('ul');
+    names.forEach(n => {
+      const li = document.createElement('li');
+      li.className = submitted[n] ? 'done' : '';
+      li.innerHTML = `<span style="display:flex;align-items:center;gap:8px;"><span class="dot"></span>${n}</span><span class="status">${submitted[n] ? 'Locked in' : 'Waiting'}</span>`;
+      ul.appendChild(li);
+    });
+    rosterEl.appendChild(ul);
+    container.appendChild(rosterEl);
+  }
+
+  function renderLocked(player, submitted) {
+    ticketEl.innerHTML = `
+      <div class="body-pad" style="padding-top:26px;">
+        <div class="locked">
+          <div class="check">✓</div>
+          <h2>You're locked in, ${player}</h2>
+          <p>Your pick is saved for the week of ${week.label}. Back Thursday for the next one.</p>
+        </div>
+      </div>
+    `;
+    renderRoster(ticketEl.querySelector('.body-pad'), submitted);
+  }
+
+  function renderForm(player, submitted) {
+    ticketEl.innerHTML = `
+      <div class="stub-head">
+        <p class="who">${player}</p>
+        <p class="sub">Enter your lock of the week</p>
+      </div>
+      <div class="perforation"></div>
+      <div class="body-pad">
+        <div class="field">
+          <label for="pick">Pick</label>
+          <input id="pick" type="text" placeholder="e.g. Chiefs -3.5" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="odds">Odds</label>
+          <input id="odds" type="text" placeholder="e.g. -110" autocomplete="off" />
+        </div>
+        <button class="primary" id="submitBtn">Lock it in</button>
+        <div id="formMsg"></div>
+      </div>
+    `;
+    renderRoster(ticketEl.querySelector('.body-pad'), submitted);
+
+    document.getElementById('submitBtn').onclick = async () => {
+      const pick = document.getElementById('pick').value.trim();
+      const odds = document.getElementById('odds').value.trim();
+      const msgEl = document.getElementById('formMsg');
+      if (!pick) {
+        msgEl.innerHTML = '<p class="msg error">Enter a pick before locking it in.</p>';
+        return;
+      }
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Locking in…';
+      try {
+        const res = await fetch(CONFIG.WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ player, pick, odds, week: week.id, weekLabel: week.label })
+        });
+        const data = await res.json();
+        if (data.success) {
+          const status = await fetchStatus();
+          renderLocked(player, status.submitted);
+        } else {
+          msgEl.innerHTML = `<p class="msg error">${data.error || 'Something went wrong.'}</p>`;
+          btn.disabled = false;
+          btn.textContent = 'Lock it in';
+        }
+      } catch (err) {
+        msgEl.innerHTML = '<p class="msg error">Couldn\\'t reach the sheet. Check the setup and try again.</p>';
+        btn.disabled = false;
+        btn.textContent = 'Lock it in';
+      }
+    };
+  }
+
+  async function fetchStatus() {
+    const res = await fetch(`${CONFIG.WEBAPP_URL}?action=status&week=${week.id}`);
+    return res.json();
+  }
+
+  async function boot() {
+    const player = getPlayerFromURL();
+    if (!player) {
+      renderPicker();
+      return;
+    }
+    renderLoading(player);
+
+    if (CONFIG.WEBAPP_URL.indexOf('PASTE_YOUR') === 0) {
+      ticketEl.innerHTML = `
+        <div class="body-pad" style="padding-top:26px;">
+          <p class="center-note">Waiting on setup — see the note above.</p>
+        </div>
+      `;
+      return;
+    }
+
+    try {
+      const status = await fetchStatus();
+      if (!status.success) throw new Error(status.error || 'status failed');
+      if (status.submitted[player]) {
+        renderLocked(player, status.submitted);
+      } else {
+        renderForm(player, status.submitted);
+      }
+    } catch (err) {
+      ticketEl.innerHTML = `
+        <div class="body-pad" style="padding-top:26px;">
+          <p class="msg error">Couldn't reach the sheet. Check that the Web app URL in CONFIG is correct and deployed.</p>
+        </div>
+      `;
+    }
+  }
+
+  boot();
+</script>
+</body>
+</html>
