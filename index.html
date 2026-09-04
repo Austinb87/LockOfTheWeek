@@ -328,22 +328,45 @@ function getWeekInfo(date = new Date()) {
     `;
   }
 
-  function renderRoster(container, submitted) {
+function renderRoster(container, submitted) {
     const names = Object.keys(submitted);
-    const doneCount = names.filter(n => submitted[n]).length;
+
+    // Count how many players have a pick object
+    const doneCount = names.filter(n => submitted[n] && submitted[n].pick).length;
+
     const rosterEl = document.createElement('div');
     rosterEl.className = 'roster';
     rosterEl.innerHTML = `<p class="count">${doneCount}/${names.length} locks in</p>`;
+
     const ul = document.createElement('ul');
+
     names.forEach(n => {
-      const li = document.createElement('li');
-      li.className = submitted[n] ? 'done' : '';
-      li.innerHTML = `<span style="display:flex;align-items:center;gap:8px;"><span class="dot"></span>${n}</span><span class="status">${submitted[n] ? 'Locked in' : 'Waiting'}</span>`;
-      ul.appendChild(li);
+        const li = document.createElement('li');
+
+        const sub = submitted[n];   // pick + odds object or null
+        const hasPick = sub && sub.pick;
+
+        li.className = hasPick ? 'done' : '';
+
+        const statusText = hasPick
+            ? `${sub.pick} (${sub.odds})`
+            : 'Waiting';
+
+        li.innerHTML = `
+            <span style="display:flex;align-items:center;gap:8px;">
+                <span class="dot"></span>
+                <span>${n}</span>
+                <span class="status">${statusText}</span>
+            </span>
+        `;
+
+        ul.appendChild(li);
     });
+
     rosterEl.appendChild(ul);
     container.appendChild(rosterEl);
-  }
+}
+
 
   function renderLocked(player, submitted) {
     ticketEl.innerHTML = `
