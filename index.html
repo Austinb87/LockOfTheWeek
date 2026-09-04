@@ -252,7 +252,7 @@
     end.setDate(start.getDate() + 6);
 
     const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const id = '${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,'0')}-${String(start.getDate()).padStart(2,'0')}';
+    const id = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(start.getDate()).padStart(2,"0")}`;
     return { start, end, id, label: `${fmt(start)} – ${fmt(end)}` };
   }
 
