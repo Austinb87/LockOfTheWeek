@@ -241,20 +241,40 @@
     return s.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   }
 
-  function getWeekInfo(date = new Date()) {
-    const d = new Date(date);
-    const day = d.getDay();
-    const diff = (day - WEEK_START_DAY + 7) % 7;
-    const start = new Date(d);
-    start.setHours(0, 0, 0, 0);
-    start.setDate(d.getDate() - diff);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
+function getWeekInfo(date = new Date()) {
+  const d = new Date(date);
 
-    const fmt = (dt) => dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    const id = `${start.getFullYear()}-${String(start.getMonth()+1).padStart(2,"0")}-${String(start.getDate()).padStart(2,"0")}`;
-    return { start, end, id, label: `${fmt(start)} – ${fmt(end)}` };
-  }
+  // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+  const WEEK_START_DAY = 4; // Thursday
+
+  const day = d.getDay();
+  const diff = (day - WEEK_START_DAY + 7) % 7;
+
+  // Calculate the Thursday of the current week in LOCAL TIME
+  const start = new Date(d);
+  start.setHours(0, 0, 0, 0);
+  start.setDate(d.getDate() - diff);
+
+  // End of week = Wednesday
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+
+  // SAFE week ID (no timezone shift)
+  const id = new Date(
+    start.getTime() - start.getTimezoneOffset() * 60000
+  ).toISOString().slice(0, 10);
+
+  const fmt = dt =>
+    dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+  return {
+    start,
+    end,
+    id,
+    label: `${fmt(start)} – ${fmt(end)}`
+  };
+}
+
 
   function getPlayerFromURL() {
     const params = new URLSearchParams(window.location.search);
