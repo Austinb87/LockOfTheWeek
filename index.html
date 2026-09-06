@@ -374,7 +374,17 @@ function renderRoster(container, submitted) {
         <div class="locked">
           <div class="check">✓</div>
           <h2>You're locked in, ${player}</h2>
-          <p>Your pick is saved for the week of ${week.label}. Back Thursday for the next one.</p>
+          <p>Your pick is saved for the week of ${week.label}. Come back Thursday for the next one.</p>
+           <!-- BACK BUTTON -->
+        <button id="backBtn" class="back-btn" style="
+            margin-top:20px;
+            padding:10px 16px;
+            font-size:16px;
+            border:none;
+            background:#eee;
+            border-radius:6px;
+            cursor:pointer;
+        ">← Back</button>
         </div>
       </div>
     `;
