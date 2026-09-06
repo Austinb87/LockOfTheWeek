@@ -443,8 +443,10 @@
     renderRoster(ticketEl.querySelector('.body-pad'), submitted, records);
         // Add click handler for the Back button
     document.getElementById('backBtn').addEventListener('click', () => {
-        // Go back to the landing page
-        window.location.href = 'index.html';
+        // Clear the player param and return to the picker screen
+        const url = new URL(window.location.href);
+        url.searchParams.delete('player');
+        window.location.href = url.toString();
     });
   }
 
