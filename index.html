@@ -227,6 +227,53 @@
 </div>
 
 <script>
+  // Confetti setup — defined first so burst() is available to the app logic below.
+  const canvas = document.getElementById('confetti-canvas');
+  const ctx = canvas.getContext('2d');
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const confettiColors = ['#f94144','#f3722c','#f9c74f','#90be6d','#577590','#9b5de5'];
+  let particles = [];
+
+  function burst(x, y) {
+    for (let i = 0; i < 150; i++) {
+      particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 12,
+        vy: Math.random() * -12 - 4,
+        size: Math.random() * 7 + 4,
+        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        rot: Math.random() * 360,
+        vr: (Math.random() - 0.5) * 15,
+        life: 0
+      });
+    }
+  }
+
+  function animateConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      p.vy += 0.2;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.rot += p.vr;
+      p.life++;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate((p.rot * Math.PI) / 180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      ctx.restore();
+    });
+    particles = particles.filter(p => p.y < canvas.height + 30 && p.life < 400);
+    requestAnimationFrame(animateConfetti);
+  }
+  animateConfetti();
+</script>
+
+<script>
   // ------------------------------------------------------------------
   // CONFIG — edit these two lines after you deploy the Apps Script
   // ------------------------------------------------------------------
@@ -242,39 +289,39 @@
     return s.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
   }
 
-function getWeekInfo(date = new Date()) {
-  const d = new Date(date);
+  function getWeekInfo(date = new Date()) {
+    const d = new Date(date);
 
-  // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-  const WEEK_START_DAY = 4; // Thursday
+    // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+    const WEEK_START_DAY = 4; // Thursday
 
-  const day = d.getDay();
-  const diff = (day - WEEK_START_DAY + 7) % 7;
+    const day = d.getDay();
+    const diff = (day - WEEK_START_DAY + 7) % 7;
 
-  // Calculate the Thursday of the current week in LOCAL TIME
-  const start = new Date(d);
-  start.setHours(0, 0, 0, 0);
-  start.setDate(d.getDate() - diff);
+    // Calculate the Thursday of the current week in LOCAL TIME
+    const start = new Date(d);
+    start.setHours(0, 0, 0, 0);
+    start.setDate(d.getDate() - diff);
 
-  // End of week = Wednesday
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
+    // End of week = Wednesday
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
 
-  // SAFE week ID (no timezone shift)
-  const id = new Date(
-    start.getTime() - start.getTimezoneOffset() * 60000
-  ).toISOString().slice(0, 10);
+    // SAFE week ID (no timezone shift)
+    const id = new Date(
+      start.getTime() - start.getTimezoneOffset() * 60000
+    ).toISOString().slice(0, 10);
 
-  const fmt = dt =>
-    dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const fmt = dt =>
+      dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
-  return {
-    start,
-    end,
-    id,
-    label: `${fmt(start)} – ${fmt(end)}`
-  };
-}
+    return {
+      start,
+      end,
+      id,
+      label: `${fmt(start)} – ${fmt(end)}`
+    };
+  }
 
   function getPlayerFromURL() {
     const params = new URLSearchParams(window.location.search);
@@ -329,7 +376,7 @@ function getWeekInfo(date = new Date()) {
     `;
   }
 
-function renderRoster(container, submitted, records) {
+  function renderRoster(container, submitted, records) {
     const names = Object.keys(submitted);
 
     // Count how many players have a pick object
@@ -370,9 +417,7 @@ function renderRoster(container, submitted, records) {
 
     rosterEl.appendChild(ul);
     container.appendChild(rosterEl);
-}
-
-
+  }
 
   function renderLocked(player, submitted, records) {
     ticketEl.innerHTML = `
@@ -444,6 +489,7 @@ function renderRoster(container, submitted, records) {
         });
         const data = await res.json();
         if (data.success) {
+          burst(window.innerWidth / 2, window.innerHeight / 3);
           const status = await fetchStatus();
           renderLocked(player, status.submitted);
         } else {
@@ -499,53 +545,6 @@ function renderRoster(container, submitted, records) {
   }
 
   boot();
-</script>
-<script>
-const canvas = document.getElementById('confetti-canvas');
-const ctx = canvas.getContext('2d');
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-resize();
-window.addEventListener('resize', resize);
-
-const colors = ['#f94144','#f3722c','#f9c74f','#90be6d','#577590','#9b5de5'];
-let particles = [];
-
-function burst(x, y) {
-  for (let i = 0; i < 150; i++) {
-    particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 12,
-      vy: Math.random() * -12 - 4,
-      size: Math.random() * 7 + 4,
-      color: colors[Math.floor(Math.random() * colors.length)],
-      rot: Math.random() * 360,
-      vr: (Math.random() - 0.5) * 15,
-      life: 0
-    });
-  }
-}
-
-function animate() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  particles.forEach(p => {
-    p.vy += 0.2;
-    p.x += p.vx;
-    p.y += p.vy;
-    p.rot += p.vr;
-    p.life++;
-    ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate((p.rot * Math.PI) / 180);
-    ctx.fillStyle = p.color;
-    ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
-    ctx.restore();
-  });
-  particles = particles.filter(p => p.y < canvas.height + 30 && p.life < 400);
-  requestAnimationFrame(animate);
-}
-animate();
-
-document.getElementById('submitBtn').addEventListener('click', (e) => burst(e.clientX, e.clientY));
 </script>
 
 </body>
