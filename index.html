@@ -328,7 +328,7 @@ function getWeekInfo(date = new Date()) {
     `;
   }
 
-function renderRoster(container, submitted) {
+function renderRoster(container, submitted, records) {
     const names = Object.keys(submitted);
 
     // Count how many players have a pick object
@@ -346,16 +346,20 @@ function renderRoster(container, submitted) {
         const sub = submitted[n];   // pick + odds object or null
         const hasPick = sub && sub.pick;
 
-        li.className = hasPick ? 'done' : '';
+        const rec = records[n];
+        const recordText = `${rec.wins}-${rec.losses}-${rec.ties}`;
 
         const statusText = hasPick
             ? `${sub.pick} (${sub.odds}) ${sub.status}`
             : 'Waiting';
 
+        li.className = hasPick ? 'done' : '';
+
         li.innerHTML = `
             <span style="display:flex;align-items:center;gap:8px;">
                 <span class="dot"></span>
                 <span>${n}</span>
+                <span class="record" style="opacity:0.7;">Record: ${recordText}</span>
                 <span class="status">${statusText}</span>
             </span>
         `;
@@ -366,6 +370,7 @@ function renderRoster(container, submitted) {
     rosterEl.appendChild(ul);
     container.appendChild(rosterEl);
 }
+
 
 
   function renderLocked(player, submitted) {
