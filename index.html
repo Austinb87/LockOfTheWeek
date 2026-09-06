@@ -394,7 +394,7 @@
         const sub = submitted[n];   // pick + odds object or null
         const hasPick = sub && sub.pick;
 
-        const rec = records[n];
+        const rec = records[n] || { wins: 0, losses: 0, ties: 0 };
         const recordText = `${rec.wins}-${rec.losses}-${rec.ties}`;
 
         const statusText = hasPick
