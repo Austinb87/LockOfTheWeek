@@ -6,6 +6,7 @@
 <title>🔒 of the Week</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<canvas id="confetti-canvas" style="position:fixed; top:0; left:0; pointer-events:none;"></canvas>
 <style>
   :root {
     --bg: #12161d;
@@ -499,5 +500,53 @@ function renderRoster(container, submitted, records) {
 
   boot();
 </script>
+<script>
+const canvas = document.getElementById('confetti-canvas');
+const ctx = canvas.getContext('2d');
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+const colors = ['#f94144','#f3722c','#f9c74f','#90be6d','#577590','#9b5de5'];
+let particles = [];
+
+function burst(x, y) {
+  for (let i = 0; i < 150; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 12,
+      vy: Math.random() * -12 - 4,
+      size: Math.random() * 7 + 4,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * 360,
+      vr: (Math.random() - 0.5) * 15,
+      life: 0
+    });
+  }
+}
+
+function animate() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    p.vy += 0.2;
+    p.x += p.vx;
+    p.y += p.vy;
+    p.rot += p.vr;
+    p.life++;
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate((p.rot * Math.PI) / 180);
+    ctx.fillStyle = p.color;
+    ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+    ctx.restore();
+  });
+  particles = particles.filter(p => p.y < canvas.height + 30 && p.life < 400);
+  requestAnimationFrame(animate);
+}
+animate();
+
+document.getElementById('submit-btn').addEventListener('click', (e) => burst(e.clientX, e.clientY));
+</script>
+
 </body>
 </html>
