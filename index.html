@@ -493,7 +493,7 @@
         if (data.success) {
           burst(window.innerWidth / 2, window.innerHeight / 3);
           const status = await fetchStatus();
-          renderLocked(player, status.submitted);
+          renderLocked(player, status.submitted, status.records);
         } else {
           msgEl.innerHTML = `<p class="msg error">${data.error || 'Something went wrong.'}</p>`;
           btn.disabled = false;
