@@ -389,6 +389,11 @@ function renderRoster(container, submitted) {
       </div>
     `;
     renderRoster(ticketEl.querySelector('.body-pad'), submitted);
+        // Add click handler for the Back button
+    document.getElementById('backBtn').addEventListener('click', () => {
+        // Go back to the landing page
+        window.location.href = 'index.html';
+    });
   }
 
   function renderForm(player, submitted) {
