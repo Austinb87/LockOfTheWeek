@@ -242,17 +242,18 @@
   resizeCanvas();
   window.addEventListener('resize', resizeCanvas);
 
-  const confettiColors = ['#f94144','#f3722c','#f9c74f','#90be6d','#577590','#9b5de5'];
+  const confettiEmojis = ['🔒','🎉','🏈','💰'];
+  const dylanEmojis = ['🍆'];
   let particles = [];
 
-  function burst(x, y) {
-    for (let i = 0; i < 150; i++) {
+  function burst(x, y, emojiSet = confettiEmojis) {
+    for (let i = 0; i < 60; i++) {
       particles.push({
         x, y,
         vx: (Math.random() - 0.5) * 12,
         vy: Math.random() * -12 - 4,
-        size: Math.random() * 7 + 4,
-        color: confettiColors[Math.floor(Math.random() * confettiColors.length)],
+        size: Math.random() * 14 + 20,
+        emoji: emojiSet[Math.floor(Math.random() * emojiSet.length)],
         rot: Math.random() * 360,
         vr: (Math.random() - 0.5) * 15,
         life: 0
@@ -271,8 +272,10 @@
       ctx.save();
       ctx.translate(p.x, p.y);
       ctx.rotate((p.rot * Math.PI) / 180);
-      ctx.fillStyle = p.color;
-      ctx.fillRect(-p.size/2, -p.size/4, p.size, p.size/2);
+      ctx.font = p.size + 'px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(p.emoji, 0, 0);
       ctx.restore();
     });
     particles = particles.filter(p => p.y < canvas.height + 30 && p.life < 400);
@@ -492,7 +495,7 @@
         });
         const data = await res.json();
         if (data.success) {
-          burst(window.innerWidth / 2, window.innerHeight / 3);
+          burst(window.innerWidth / 2, window.innerHeight / 3, player === 'Dylan' ? dylanEmojis : confettiEmojis);
           const status = await fetchStatus();
           renderLocked(player, status.submitted, status.records);
         } else {
