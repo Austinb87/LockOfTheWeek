@@ -373,7 +373,7 @@ function renderRoster(container, submitted, records) {
 
 
 
-  function renderLocked(player, submitted) {
+  function renderLocked(player, submitted, records) {
     ticketEl.innerHTML = `
       <div class="body-pad" style="padding-top:26px;">
         <div class="locked">
@@ -394,7 +394,7 @@ function renderRoster(container, submitted, records) {
         </div>
       </div>
     `;
-    renderRoster(ticketEl.querySelector('.body-pad'), submitted);
+    renderRoster(ticketEl.querySelector('.body-pad'), submitted, records);
         // Add click handler for the Back button
     document.getElementById('backBtn').addEventListener('click', () => {
         // Go back to the landing page
@@ -402,7 +402,7 @@ function renderRoster(container, submitted, records) {
     });
   }
 
-  function renderForm(player, submitted) {
+  function renderForm(player, submitted, records) {
     ticketEl.innerHTML = `
       <div class="stub-head">
         <p class="who">${player}</p>
@@ -422,7 +422,7 @@ function renderRoster(container, submitted, records) {
         <div id="formMsg"></div>
       </div>
     `;
-    renderRoster(ticketEl.querySelector('.body-pad'), submitted);
+    renderRoster(ticketEl.querySelector('.body-pad'), submitted, records);
 
     document.getElementById('submitBtn').onclick = async () => {
       const pick = document.getElementById('pick').value.trim();
@@ -484,9 +484,9 @@ function renderRoster(container, submitted, records) {
       const status = await fetchStatus();
       if (!status.success) throw new Error(status.error || 'status failed');
       if (status.submitted[player]) {
-        renderLocked(player, status.submitted);
+        renderLocked(player, status.submitted, status.records);
       } else {
-        renderForm(player, status.submitted);
+        renderForm(player, status.submitted, status.records);
       }
     } catch (err) {
       ticketEl.innerHTML = `
