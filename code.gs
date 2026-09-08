@@ -1,0 +1,142 @@
+/**
+ * LOCK OF THE WEEK — Google Sheets backend
+ * ------------------------------------------------
+ * SETUP (one time, ~5 minutes):
+ * 1. Go to sheets.google.com and create a new blank spreadsheet.
+ *    Name it whatever you want, e.g. "Lock of the Week".
+ * 2. In the sheet, add a header row in row 1:
+ *    Timestamp | Week Start | Week Label | Player | Pick | Odds
+ * 3. Extensions > Apps Script. Delete any starter code and paste in
+ *    this entire file.
+ * 4. Edit the PLAYERS array below to your 4 guys' real names
+ *    (exact spelling — this is how the app matches people up).
+ * 5. Click Deploy > New deployment.
+ *    - Type: Web app
+ *    - Execute as: Me
+ *    - Who has access: Anyone
+ *    Click Deploy, then authorize the permissions it asks for.
+ * 6. Copy the "Web app URL" it gives you — you'll paste that into
+ *    the CONFIG.WEBAPP_URL constant in the HTML app.
+ * 7. Whenever you edit this script again, you must go to
+ *    Deploy > Manage deployments > edit (pencil) > New version > Deploy
+ *    for changes to actually go live.
+ *
+ * You are the only one with edit access to the Sheet or this script —
+ * the web app can only ever append a row, never read or edit picks.
+ */
+
+// ---- EDIT THIS with your 4 guys' names, exactly as you want them shown ----
+const PLAYERS = ['Austin', 'Baroni', 'Dobby', 'Dylan'];
+
+// If your locks should reset on a day/time other than Thursday 12:00am,
+// change this. 4 = Thursday (0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat)
+const WEEK_START_DAY = 4;
+
+function doGet(e) {
+  const action = e.parameter.action;
+  if (action === 'status') {
+    return respond(getWeekStatus(e.parameter.week));
+  }
+  return respond({ success: false, error: 'unknown action' });
+}
+
+function doPost(e) {
+  try {
+    const body = JSON.parse(e.postData.contents);
+    const player = (body.player || '').trim();
+    const pick = (body.pick || '').trim();
+    const odds = (body.odds || '').trim();
+    const weekId = (body.week || '').trim();
+
+    if (!PLAYERS.includes(player)) {
+      return respond({ success: false, error: 'Unrecognized player.' });
+    }
+    if (!pick) {
+      return respond({ success: false, error: 'Pick cannot be empty.' });
+    }
+    if (!weekId) {
+      return respond({ success: false, error: 'Missing week.' });
+    }
+
+   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+    const data = sheet.getDataRange().getValues();
+
+    // Enforce one lock per player per week
+    for (let i = 1; i < data.length; i++) {
+      if (String(data[i][1]) === weekId && String(data[i][3]) === player) {
+        return respond({ success: false, error: 'Already submitted this week.' });
+      }
+    }
+
+    sheet.appendRow([
+      new Date(),
+      weekId,
+      body.weekLabel || '',
+      player,
+      pick,
+      odds
+    ]);
+
+    return respond({ success: true });
+  } catch (err) {
+    return respond({ success: false, error: 'Server error: ' + err.message });
+  }
+}
+
+function computeRecord(data, player) {
+  let wins = 0, losses = 0, ties = 0;
+
+  for (let i = 1; i < data.length; i++) {
+    const rowPlayer = String(data[i][3]);
+    const result = String(data[i][6] || "");
+
+    if (rowPlayer === player) {
+      if (result === "✅") wins++;
+      else if (result === "❌") losses++;
+      else if (result === "👔") ties++;
+    }
+  }
+
+  return { wins, losses, ties };
+}
+
+
+function getWeekStatus(weekId) {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+
+  const data = sheet.getDataRange().getValues();
+  const submitted = {};
+  PLAYERS.forEach(p => (submitted[p] = false));
+
+  for (let i = 1; i < data.length; i++) {
+  const sheetWeek = Utilities.formatDate(new Date(data[i][1]), "GMT", "yyyy-MM-dd");
+  const player = String(data[i][3]);
+
+  if (sheetWeek === weekId && submitted.hasOwnProperty(player)) {
+    submitted[player] = {
+      pick: data[i][4],   // Pick column
+      odds: data[i][5],    // Odds column
+      status: data[i][6]  //status column
+    };
+  }
+}
+
+return {
+  success: true,
+  players: PLAYERS,
+  submitted: submitted,
+  records: PLAYERS.reduce((acc, p) => {
+    acc[p] = computeRecord(data, p);
+    return acc;
+  }, {})
+};
+
+}
+
+
+function respond(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
