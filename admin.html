@@ -233,6 +233,8 @@ verifyBtn.onclick = async () => {
     adminBadge.classList.remove('hidden');
     controls.classList.remove('hidden');
     populateWeekOptions();
+    // Automatically load the current week
+    loadCurrentWeek();
   } else {
     authMsg.textContent = 'Bad password';
     controls.classList.add('hidden');
@@ -251,7 +253,7 @@ backBtn.onclick = () => {
   window.location.href = '/LockOfTheWeek/';
 };
 
-loadBtn.onclick = async () => {
+async function loadCurrentWeek() {
   resultMsg.textContent = 'Loading…';
   const week = weekSelect.value;
   try {
@@ -262,6 +264,10 @@ loadBtn.onclick = async () => {
   } catch (err) {
     resultMsg.textContent = 'Error loading status';
   }
+}
+
+loadBtn.onclick = async () => {
+  await loadCurrentWeek();
 };
 
 saveBtn.onclick = async () => {
