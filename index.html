@@ -215,6 +215,25 @@
     padding: 1px 5px;
     border-radius: 3px;
   }
+
+  /* Admin floating button */
+  .admin-btn {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 10001;
+    background: var(--gold);
+    color: #1a1405;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .admin-btn:hover { background: var(--gold-hi); }
 </style>
 </head>
 <body>
@@ -225,6 +244,9 @@
   <div id="setupBanner"></div>
   <div class="ticket" id="ticket"></div>
 </div>
+
+<!-- Admin link (floating) -->
+<a class="admin-btn" href="admin.html" id="adminLink" aria-label="Admin page">Admin</a>
 
 <script>
   window.addEventListener('error', (e) => {
@@ -353,7 +375,7 @@
 
   if (CONFIG.WEBAPP_URL.indexOf('PASTE_YOUR') === 0) {
     document.getElementById('setupBanner').innerHTML =
-      '<div class="setup-banner">Setup needed: paste your Apps Script Web app URL into <code>CONFIG.WEBAPP_URL</code> in this file, and update <code>CONFIG.PLAYERS</code> to match the names in your script.</div>';
+      '<div class="setup-banner">Setup needed: paste your Apps Script Web app URL into <code>CONFIG.WEBAPP_URL</code> in this file, and update <code>CONFIG.PLAYERS</code> to match the names in your sc[...]'
   }
 
   const ticketEl = document.getElementById('ticket');
