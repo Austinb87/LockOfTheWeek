@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin — 🔒 of the Week</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1720;
+    --card: #11151c;
+    --card-border: #232a34;
+    --gold: #c7a03d;
+    --text: #eaedf2;
+    --muted: #8791a3;
+    --green: #4caf6d;
+    --red: #d9634a;
+  }
+  * { box-sizing: border-box; }
+  html,body{margin:0;height:100%;font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text)}
+  .wrap{max-width:820px;margin:28px auto;padding:20px}
+  .card{background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:18px}
+  h1{font-family:'Oswald',sans-serif;margin:0 0 8px}
+  .muted{color:var(--muted);font-size:13px}
+  .row{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+  select,input{background:#0b0e12;border:1px solid var(--card-border);color:var(--text);padding:10px;border-radius:6px}
+  button{background:var(--gold);border:none;color:#1a1405;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+  button.secondary{background:#11151c;color:var(--text);border:1px solid var(--card-border)}
+  table{width:100%;border-collapse:collapse;margin-top:12px}
+  th,td{padding:10px;text-align:left;border-bottom:1px solid var(--card-border)}
+  td.statusCell select{width:92px}
+  .msg{margin-top:10px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div style="display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px">
+    <div>
+      <h1>Admin — 🔒 of the Week</h1>
+      <div class="muted">Update player status for a selected week (bulk save)</div>
+    </div>
+    <div style="text-align:right">
+      <a href="/index.html" style="color:var(--muted);text-decoration:none">Open public page</a>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label class="muted">Password:</label>
+      <input id="password" type="password" placeholder="admin password from Sheet2!A1" />
+      <button id="verifyBtn">Unlock</button>
+      <div id="authMsg" class="muted"></div>
+    </div>
+
+    <div id="controls" class="hidden">
+      <div class="row">
+        <label class="muted">Week:</label>
+        <select id="weekSelect"></select>
+        <button id="loadBtn" class="secondary">Load</button>
+        <div style="flex:1"></div>
+        <button id="saveBtn">Save All</button>
+      </div>
+
+      <div id="tableWrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Pick</th>
+              <th style="width:120px">Status</th>
+            </tr>
+          </thead>
+          <tbody id="playersTbody"></tbody>
+        </table>
+      </div>
+
+      <div id="resultMsg" class="msg muted"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// CONFIG — keep PLAYERS in sync with index.html
+const CONFIG = {
+  WEBAPP_URL: "https://script.google.com/macros/s/AKfycbwRUF5MF3utCwUcp5Hc3fJdoCFrmbUms3xRkbcvr3mCUrHUjY79ZUvVrW-tSHh9e47P/exec",
+  PLAYERS: ["Austin", "Baroni", "Dobby", "Dylan"]
+};
+
+const EMOJI_OPTIONS = ["✅","❌","👔"];
+const weekSelect = document.getElementById('weekSelect');
+const passwordEl = document.getElementById('password');
+const verifyBtn = document.getElementById('verifyBtn');
+const authMsg = document.getElementById('authMsg');
+const controls = document.getElementById('controls');
+const loadBtn = document.getElementById('loadBtn');
+const playersTbody = document.getElementById('playersTbody');
+const saveBtn = document.getElementById('saveBtn');
+const resultMsg = document.getElementById('resultMsg');
+
+function getWeekInfo(date = new Date()) {
+  const d = new Date(date);
+  const WEEK_START_DAY = 4; // Thursday
+  const day = d.getDay();
+  const diff = (day - WEEK_START_DAY + 7) % 7;
+  const start = new Date(d);
+  start.setHours(0,0,0,0);
+  start.setDate(d.getDate() - diff);
+  const end = new Date(start); end.setDate(start.getDate()+6);
+  const id = new Date(start.getTime() - start.getTimezoneOffset()*60000).toISOString().slice(0,10);
+  const fmt = dt => dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return { start, end, id, label: `${fmt(start)} – ${fmt(end)}` };
+}
+
+function populateWeekOptions() {
+  weekSelect.innerHTML = '';
+  const now = new Date();
+  for (let i = 0; i < 12; i++) {
+    const wk = getWeekInfo(new Date(now.getFullYear(), now.getMonth(), now.getDate() - i*7));
+    const opt = document.createElement('option');
+    opt.value = wk.id; opt.textContent = wk.label; weekSelect.appendChild(opt);
+  }
+  // default to current week
+  weekSelect.value = getWeekInfo().id;
+}
+
+async function verifyPassword(pw) {
+  try {
+    const res = await fetch(`${CONFIG.WEBAPP_URL}?action=verifyAdmin&password=${encodeURIComponent(pw)}`);
+    const data = await res.json();
+    return !!data.success;
+  } catch (err) {
+    return false;
+  }
+}
+
+async function fetchStatus(week) {
+  const res = await fetch(`${CONFIG.WEBAPP_URL}?action=status&week=${week}`);
+  return res.json();
+}
+
+function renderPlayers(submitted) {
+  playersTbody.innerHTML = '';
+  CONFIG.PLAYERS.forEach(p => {
+    const tr = document.createElement('tr');
+    const pick = (submitted[p] && submitted[p].pick) ? submitted[p].pick : '';
+    const status = (submitted[p] && submitted[p].status) ? submitted[p].status : '';
+    tr.innerHTML = `
+      <td>${p}</td>
+      <td><input data-player="${p}" class="pickInput" value="${escapeHtml(pick)}"/></td>
+      <td class="statusCell">
+        <select data-player="${p}">
+          <option value="">(none)</option>
+          ${EMOJI_OPTIONS.map(e => `<option value="${e}" ${e===status? 'selected':''}>${e}</option>`).join('')}
+        </select>
+      </td>
+    `;
+    playersTbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+verifyBtn.onclick = async () => {
+  authMsg.textContent = 'Checking…';
+  const ok = await verifyPassword(passwordEl.value.trim());
+  if (ok) {
+    authMsg.textContent = 'Unlocked';
+    controls.classList.remove('hidden');
+    populateWeekOptions();
+  } else {
+    authMsg.textContent = 'Bad password';
+    controls.classList.add('hidden');
+  }
+};
+
+loadBtn.onclick = async () => {
+  resultMsg.textContent = 'Loading…';
+  const week = weekSelect.value;
+  try {
+    const status = await fetchStatus(week);
+    if (!status.success) throw new Error(status.error || 'failed');
+    renderPlayers(status.submitted);
+    resultMsg.textContent = 'Loaded';
+  } catch (err) {
+    resultMsg.textContent = 'Error loading status';
+  }
+};
+
+saveBtn.onclick = async () => {
+  resultMsg.textContent = 'Saving…';
+  const week = weekSelect.value;
+  const password = passwordEl.value.trim();
+  const rows = [];
+  const selects = playersTbody.querySelectorAll('select[data-player]');
+  selects.forEach(s => {
+    const player = s.getAttribute('data-player');
+    const status = s.value;
+    if (status) rows.push({ player, status });
+  });
+  if (rows.length === 0) { resultMsg.textContent = 'No statuses selected'; return; }
+
+  try {
+    const res = await fetch(CONFIG.WEBAPP_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'updateStatuses', password, week, updates: rows })
+    });
+    const data = await res.json();
+    if (data.success) {
+      resultMsg.textContent = `Saved — updated ${data.updated} rows`;
+    } else {
+      resultMsg.textContent = 'Error: ' + (data.error || 'unknown');
+    }
+  } catch (err) {
+    resultMsg.textContent = 'Network error';
+  }
+};
+
+// auto-populate weeks but wait until unlocked
+populateWeekOptions();
+</script>
+</body>
+</html>
