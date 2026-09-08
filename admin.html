@@ -29,7 +29,8 @@
   button.secondary{background:#11151c;color:var(--text);border:1px solid var(--card-border)}
   table{width:100%;border-collapse:collapse;margin-top:12px}
   th,td{padding:10px;text-align:left;border-bottom:1px solid var(--card-border);vertical-align:top}
-  th.playerCol{width:110px}
+  th.playerCol{width:90px}
+  th.pickCol{width:auto}
   th.statusCol{width:80px}
   td.statusCell select{width:72px}
   table input, table select{width:100%;box-sizing:border-box}
@@ -50,7 +51,7 @@
     th, td{padding:8px;font-size:14px}
     td.statusCell select{width:100%}
     table{font-size:14px}
-    th.playerCol{width:90px}
+    th.playerCol{width:70px}
     th.statusCol{width:72px}
   }
 
@@ -95,7 +96,7 @@
           <thead>
             <tr>
               <th class="playerCol">Player</th>
-              <th>Pick</th>
+              <th class="pickCol">Pick</th>
               <th class="statusCol">Status</th>
             </tr>
           </thead>
@@ -218,6 +219,7 @@ function updateSaveState() {
   saveBtn.disabled = !changed;
 }
 
+// Verify button click handler
 verifyBtn.onclick = async () => {
   authMsg.textContent = 'Checking…';
   const pw = passwordEl.value.trim();
@@ -235,6 +237,13 @@ verifyBtn.onclick = async () => {
     controls.classList.add('hidden');
   }
 };
+
+// Allow Enter key on password field to trigger unlock
+passwordEl.addEventListener('keypress', (e) => {
+  if (e.key === 'Enter') {
+    verifyBtn.click();
+  }
+});
 
 loadBtn.onclick = async () => {
   resultMsg.textContent = 'Loading…';
