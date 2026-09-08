@@ -5,7 +5,7 @@
  * 1. Go to sheets.google.com and create a new blank spreadsheet.
  *    Name it whatever you want, e.g. "Lock of the Week".
  * 2. In the sheet, add a header row in row 1:
- *    Timestamp | Week Start | Week Label | Player | Pick | Odds
+ *    Timestamp | Week Start | Week Label | Player | Pick | Odds | Status
  * 3. Extensions > Apps Script. Delete any starter code and paste in
  *    this entire file.
  * 4. Edit the PLAYERS array below to your 4 guys' real names
@@ -37,12 +37,22 @@ function doGet(e) {
   if (action === 'status') {
     return respond(getWeekStatus(e.parameter.week));
   }
+  if (action === 'verifyAdmin') {
+    const password = e.parameter.password || '';
+    return respond({ success: verifyAdmin(password) });
+  }
   return respond({ success: false, error: 'unknown action' });
 }
 
 function doPost(e) {
   try {
     const body = JSON.parse(e.postData.contents);
+
+    // admin batch status update
+    if (body.action === 'updateStatuses') {
+      return updateStatuses(body);
+    }
+
     const player = (body.player || '').trim();
     const pick = (body.pick || '').trim();
     const odds = (body.odds || '').trim();
@@ -78,6 +88,66 @@ function doPost(e) {
     ]);
 
     return respond({ success: true });
+  } catch (err) {
+    return respond({ success: false, error: 'Server error: ' + err.message });
+  }
+}
+
+function verifyAdmin(password) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet2");
+    if (!sheet) return false;
+    const stored = String(sheet.getRange(1, 1).getValue() || '');
+    return stored === String(password);
+  } catch (err) {
+    return false;
+  }
+}
+
+function updateStatuses(body) {
+  try {
+    const password = String(body.password || '');
+    if (!verifyAdmin(password)) return respond({ success: false, error: 'Unauthorized' });
+
+    const weekId = String(body.week || '');
+    if (!weekId) return respond({ success: false, error: 'Missing week' });
+
+    const updates = body.updates || [];
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return respond({ success: false, error: 'No updates provided' });
+    }
+
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+    const data = sheet.getDataRange().getValues();
+
+    let updated = 0;
+    updates.forEach(u => {
+      const player = String(u.player || '').trim();
+      const status = String(u.status || '').trim();
+      if (!PLAYERS.includes(player)) return;
+      if (!status) return;
+
+      let found = false;
+      for (let i = 1; i < data.length; i++) {
+        const sheetWeek = Utilities.formatDate(new Date(data[i][1]), "GMT", "yyyy-MM-dd");
+        const rowPlayer = String(data[i][3]);
+        if (sheetWeek === weekId && rowPlayer === player) {
+          // column G = 7
+          sheet.getRange(i + 1, 7).setValue(status);
+          found = true;
+          updated++;
+          break;
+        }
+      }
+
+      if (!found) {
+        // append a row with the status even if pick/odds are missing
+        sheet.appendRow([new Date(), weekId, '', player, '', '', status]);
+        updated++;
+      }
+    });
+
+    return respond({ success: true, updated: updated });
   } catch (err) {
     return respond({ success: false, error: 'Server error: ' + err.message });
   }
@@ -139,4 +209,3 @@ function respond(obj) {
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
-
