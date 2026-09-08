@@ -70,7 +70,7 @@
       <div class="muted">Update player status for a selected week (bulk save)</div>
     </div>
     <div style="text-align:right">
-      <a href="/index.html" style="color:var(--muted);text-decoration:none">Open public page</a>
+      <button id="backBtn" class="secondary">← Back</button>
     </div>
   </div>
 
@@ -132,6 +132,7 @@ const resultMsg = document.getElementById('resultMsg');
 const passwordRow = document.getElementById('passwordRow');
 const adminBadge = document.getElementById('adminBadge');
 const saveSpacer = document.getElementById('saveSpacer');
+const backBtn = document.getElementById('backBtn');
 
 let ADMIN_PASSWORD = '';
 let loadedStatuses = {}; // track loaded statuses to detect changes
@@ -244,6 +245,11 @@ passwordEl.addEventListener('keypress', (e) => {
     verifyBtn.click();
   }
 });
+
+// Back button handler
+backBtn.onclick = () => {
+  window.location.href = '/LockOfTheWeek/';
+};
 
 loadBtn.onclick = async () => {
   resultMsg.textContent = 'Loading…';
