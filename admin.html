@@ -28,10 +28,26 @@
   button{background:var(--gold);border:none;color:#1a1405;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
   button.secondary{background:#11151c;color:var(--text);border:1px solid var(--card-border)}
   table{width:100%;border-collapse:collapse;margin-top:12px}
-  th,td{padding:10px;text-align:left;border-bottom:1px solid var(--card-border)}
+  th,td{padding:10px;text-align:left;border-bottom:1px solid var(--card-border);vertical-align:top}
   td.statusCell select{width:92px}
+  table input, table select{width:100%;box-sizing:border-box}
+  #tableWrap{overflow:auto;-webkit-overflow-scrolling:touch}
   .msg{margin-top:10px}
   .hidden{display:none}
+
+  /* Responsive tweaks for mobile */
+  @media (max-width: 600px) {
+    .wrap{margin:12px;padding:12px}
+    .card{padding:12px}
+    .row{flex-wrap:wrap}
+    .row > label, .row > .muted {flex:0 0 100%}
+    .row input, .row select, .row button{flex:1 1 100%}
+    .row input, .row select{min-width:0}
+    .row button{margin-top:6px}
+    th, td{padding:8px;font-size:14px}
+    td.statusCell select{width:100%}
+    table{font-size:14px}
+  }
 </style>
 </head>
 <body>
@@ -42,13 +58,13 @@
       <div class="muted">Update player status for a selected week (bulk save)</div>
     </div>
     <div style="text-align:right">
-      <a href="/LockOfTheWeek/" style="color:var(--muted);text-decoration:none">Open public page</a>
+      <a href="/index.html" style="color:var(--muted);text-decoration:none">Open public page</a>
     </div>
   </div>
 
   <div class="card">
     <div class="row">
-      <label class="muted">Password:</label>
+      <label class="muted" style="min-width:60px">Password:</label>
       <input id="password" type="password" placeholder="Enter admin password" />
       <button id="verifyBtn">Unlock</button>
       <div id="authMsg" class="muted"></div>
@@ -56,7 +72,7 @@
 
     <div id="controls" class="hidden">
       <div class="row">
-        <label class="muted">Week:</label>
+        <label class="muted" style="min-width:60px">Week:</label>
         <select id="weekSelect"></select>
         <button id="loadBtn" class="secondary">Load</button>
         <div style="flex:1"></div>
