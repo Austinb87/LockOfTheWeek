@@ -33,7 +33,7 @@ const PLAYERS = ['Austin', 'Baroni', 'Dobby', 'Dylan'];
 const WEEK_START_DAY = 4;
 
 function doGet(e) {
-  const action = e.parameter.action;
+  const action = e.parameter.action || 'status';
   if (action === 'status') {
     return respond(getWeekStatus(e.parameter.week));
   }
