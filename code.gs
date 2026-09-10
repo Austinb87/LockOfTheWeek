@@ -33,15 +33,19 @@ const PLAYERS = ['Austin', 'Baroni', 'Dobby', 'Dylan'];
 const WEEK_START_DAY = 4;
 
 function doGet(e) {
-  const action = e.parameter.action || 'status';
-  if (action === 'status') {
-    return respond(getWeekStatus(e.parameter.week));
+  try {
+    const action = e.parameter.action || 'status';
+    if (action === 'status') {
+      return respond(getWeekStatus(e.parameter.week));
+    }
+    if (action === 'verifyAdmin') {
+      const password = e.parameter.password || '';
+      return respond({ success: verifyAdmin(password) });
+    }
+    return respond({ success: false, error: 'unknown action' });
+  } catch (err) {
+    return respond({ success: false, error: 'Server error: ' + err.message });
   }
-  if (action === 'verifyAdmin') {
-    const password = e.parameter.password || '';
-    return respond({ success: verifyAdmin(password) });
-  }
-  return respond({ success: false, error: 'unknown action' });
 }
 
 function doPost(e) {
@@ -68,12 +72,14 @@ function doPost(e) {
       return respond({ success: false, error: 'Missing week.' });
     }
 
-   const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
     const data = sheet.getDataRange().getValues();
 
     // Enforce one lock per player per week
     for (let i = 1; i < data.length; i++) {
-      if (String(data[i][1]) === weekId && String(data[i][3]) === player) {
+      const rowWeekId = String(data[i][1]).trim();
+      const rowPlayer = String(data[i][3]).trim();
+      if (rowWeekId === weekId && rowPlayer === player) {
         return respond({ success: false, error: 'Already submitted this week.' });
       }
     }
@@ -129,8 +135,8 @@ function updateStatuses(body) {
 
       let found = false;
       for (let i = 1; i < data.length; i++) {
-        const sheetWeek = Utilities.formatDate(new Date(data[i][1]), "GMT", "yyyy-MM-dd");
-        const rowPlayer = String(data[i][3]);
+        const sheetWeek = formatWeekId(data[i][1]);
+        const rowPlayer = String(data[i][3]).trim();
         if (sheetWeek === weekId && rowPlayer === player) {
           // column G = 7
           sheet.getRange(i + 1, 7).setValue(status);
@@ -157,7 +163,7 @@ function computeRecord(data, player) {
   let wins = 0, losses = 0, ties = 0;
 
   for (let i = 1; i < data.length; i++) {
-    const rowPlayer = String(data[i][3]);
+    const rowPlayer = String(data[i][3]).trim();
     const result = String(data[i][6] || "");
 
     if (rowPlayer === player) {
@@ -170,39 +176,52 @@ function computeRecord(data, player) {
   return { wins, losses, ties };
 }
 
-
-function getWeekStatus(weekId) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
-
-  const data = sheet.getDataRange().getValues();
-  const submitted = {};
-  PLAYERS.forEach(p => (submitted[p] = false));
-
-  for (let i = 1; i < data.length; i++) {
-  const sheetWeek = Utilities.formatDate(new Date(data[i][1]), "GMT", "yyyy-MM-dd");
-  const player = String(data[i][3]);
-
-  if (sheetWeek === weekId && submitted.hasOwnProperty(player)) {
-    submitted[player] = {
-      pick: data[i][4],   // Pick column
-      odds: data[i][5],    // Odds column
-      status: data[i][6]  //status column
-    };
+function formatWeekId(dateValue) {
+  try {
+    if (!dateValue) return '';
+    const d = new Date(dateValue);
+    return Utilities.formatDate(d, "GMT", "yyyy-MM-dd");
+  } catch (err) {
+    return String(dateValue).trim();
   }
 }
 
-return {
-  success: true,
-  players: PLAYERS,
-  submitted: submitted,
-  records: PLAYERS.reduce((acc, p) => {
-    acc[p] = computeRecord(data, p);
-    return acc;
-  }, {})
-};
+function getWeekStatus(weekId) {
+  try {
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
+    const data = sheet.getDataRange().getValues();
+    const submitted = {};
+    PLAYERS.forEach(p => (submitted[p] = false));
 
+    for (let i = 1; i < data.length; i++) {
+      const sheetWeek = formatWeekId(data[i][1]);
+      const player = String(data[i][3]).trim();
+
+      if (sheetWeek === weekId && submitted.hasOwnProperty(player)) {
+        submitted[player] = {
+          pick: data[i][4],   // Pick column
+          odds: data[i][5],    // Odds column
+          status: data[i][6]  // Status column
+        };
+      }
+    }
+
+    return {
+      success: true,
+      players: PLAYERS,
+      submitted: submitted,
+      records: PLAYERS.reduce((acc, p) => {
+        acc[p] = computeRecord(data, p);
+        return acc;
+      }, {})
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: 'Error fetching week status: ' + err.message
+    };
+  }
 }
-
 
 function respond(obj) {
   return ContentService
