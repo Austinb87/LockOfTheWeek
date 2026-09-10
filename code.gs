@@ -72,18 +72,22 @@ function doPost(e) {
       return respond({ success: false, error: 'Missing week.' });
     }
 
+    // Read sheet once
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Sheet1");
     const data = sheet.getDataRange().getValues();
 
-    // Enforce one lock per player per week
+    // Enforce one lock per player per week - only check rows matching this week
     for (let i = 1; i < data.length; i++) {
       const rowWeekId = String(data[i][1]).trim();
+      if (rowWeekId !== weekId) continue; // Skip rows from other weeks
+      
       const rowPlayer = String(data[i][3]).trim();
-      if (rowWeekId === weekId && rowPlayer === player) {
+      if (rowPlayer === player) {
         return respond({ success: false, error: 'Already submitted this week.' });
       }
     }
 
+    // Append the row
     sheet.appendRow([
       new Date(),
       weekId,
@@ -136,8 +140,10 @@ function updateStatuses(body) {
       let found = false;
       for (let i = 1; i < data.length; i++) {
         const sheetWeek = formatWeekId(data[i][1]);
+        if (sheetWeek !== weekId) continue; // Skip rows from other weeks
+        
         const rowPlayer = String(data[i][3]).trim();
-        if (sheetWeek === weekId && rowPlayer === player) {
+        if (rowPlayer === player) {
           // column G = 7
           sheet.getRange(i + 1, 7).setValue(status);
           found = true;
@@ -195,9 +201,11 @@ function getWeekStatus(weekId) {
 
     for (let i = 1; i < data.length; i++) {
       const sheetWeek = formatWeekId(data[i][1]);
+      if (sheetWeek !== weekId) continue; // Skip rows from other weeks
+      
       const player = String(data[i][3]).trim();
 
-      if (sheetWeek === weekId && submitted.hasOwnProperty(player)) {
+      if (submitted.hasOwnProperty(player)) {
         submitted[player] = {
           pick: data[i][4],   // Pick column
           odds: data[i][5],    // Odds column
